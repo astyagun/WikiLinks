@@ -7,33 +7,45 @@
 //
 
 import Cocoa
-import SwiftUI
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-
-    var window: NSWindow!
-
-
-    func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Create the SwiftUI view that provides the window contents.
-        let contentView = ContentView()
-
-        // Create the window and set the content view. 
-        window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-            backing: .buffered, defer: false)
-        window.center()
-        window.setFrameAutosaveName("Main Window")
-        window.contentView = NSHostingView(rootView: contentView)
-        window.makeKeyAndOrderFront(nil)
+    func application(_ application: NSApplication, open urls: [URL]) {
+        // TODO: (optional) Open all URLs at once
+        // TODO: (optional) Handle non-MD files differently
+        for url in urls {
+            openNoteInMacVimWiki(
+                removeSchemeFromUrl(url).removingPercentEncoding!
+            )
+        }
     }
+    
+    fileprivate func openNoteInMacVimWiki(_ wikiNotePath: String) {
+        let configuration = NSWorkspace.OpenConfiguration()
+        let nextcloudDirectory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Nextcloud").relativePath
+        configuration.arguments = ["+cd \(nextcloudDirectory) | edit \(wikiNotePath)"]
+        let appUrl = URL(fileURLWithPath: "/Applications/MacVim.app")
 
-    func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
+        NSWorkspace.shared.openApplication(
+            at: appUrl,
+            configuration: configuration,
+            completionHandler: { (app, error) -> () in
+                if error == nil { exit(0) }
+                else { exit(1) }
+        })
     }
-
-
+    
+    fileprivate func removeSchemeFromUrl(_ url: URL) -> String {
+        var result = url.absoluteString
+        
+        if result.hasPrefix("wiki:") {
+            result = String(result.dropFirst(5))
+            
+            if result.hasPrefix("//") {
+                result = String(result.dropFirst(2))
+            }
+        }
+        
+        return result
+    }
 }
-
