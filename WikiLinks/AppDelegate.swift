@@ -11,32 +11,17 @@ import Cocoa
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
-        // TODO: (optional) Open all URLs at once
-        // TODO: (optional) Handle non-MD files differently
         for url in urls {
-            openNoteInMacVimWiki(
-                removeSchemeFromUrl(url).removingPercentEncoding!
-            )
+            let decodedUrl = url.absoluteString.removingPercentEncoding!
+            let filePath = removeSchemeFromUrl(decodedUrl)
+            let absoluteUrl = absoluteWikiUrlFromRelativePath(filePath)
+            
+            NSWorkspace.shared.open(absoluteUrl)
         }
     }
     
-    fileprivate func openNoteInMacVimWiki(_ wikiNotePath: String) {
-        let configuration = NSWorkspace.OpenConfiguration()
-        let nextcloudDirectory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Nextcloud").relativePath
-        configuration.arguments = ["+cd \(nextcloudDirectory) | edit \(wikiNotePath)"]
-        let appUrl = URL(fileURLWithPath: "/Applications/MacVim.app")
-
-        NSWorkspace.shared.openApplication(
-            at: appUrl,
-            configuration: configuration,
-            completionHandler: { (app, error) -> () in
-                if error == nil { exit(0) }
-                else { exit(1) }
-        })
-    }
-    
-    fileprivate func removeSchemeFromUrl(_ url: URL) -> String {
-        var result = url.absoluteString
+    fileprivate func removeSchemeFromUrl(_ url: String) -> String {
+        var result = url
         
         if result.hasPrefix("wiki:") {
             result = String(result.dropFirst(5))
@@ -47,5 +32,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         return result
+    }
+    
+    fileprivate func absoluteWikiUrlFromRelativePath(_ filePath: String) -> URL {
+        return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Nextcloud").appendingPathComponent(filePath)
     }
 }
