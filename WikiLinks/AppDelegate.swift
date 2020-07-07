@@ -16,7 +16,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let filePath = removeSchemeFromUrl(decodedUrl)
             let absoluteUrl = absoluteWikiUrlFromRelativePath(filePath)
             
-            NSWorkspace.shared.open(absoluteUrl)
+            NSWorkspace.shared.open(absoluteUrl, configuration: NSWorkspace.OpenConfiguration(), completionHandler: { app, error in
+                exit(0)
+            })
         }
     }
     
