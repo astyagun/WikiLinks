@@ -15,9 +15,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let decodedUrl = url.absoluteString.removingPercentEncoding!.replacingOccurrences(of: "%20", with: " ")
             let filePath = removeSchemeFromUrl(decodedUrl)
             let absoluteUrl = absoluteWikiUrlFromRelativePath(filePath)
+            let openConfiguration = NSWorkspace.OpenConfiguration()
+            openConfiguration.promptsUserIfNeeded = false
             
-            NSWorkspace.shared.open(absoluteUrl, configuration: NSWorkspace.OpenConfiguration(), completionHandler: { app, error in
-                exit(0)
+            NSWorkspace.shared.open(absoluteUrl, configuration: openConfiguration, completionHandler: { app, error in
+                if error != nil {
+                    DispatchQueue.main.async {
+                        self.displayFileOpenErrorAlert(error)
+                        exit(0)
+                    }
+                } else {
+                    exit(0)
+                }
             })
         }
     }
@@ -38,5 +47,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     fileprivate func absoluteWikiUrlFromRelativePath(_ filePath: String) -> URL {
         return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Nextcloud").appendingPathComponent(filePath)
+    }
+
+    fileprivate func displayFileOpenErrorAlert(_ error: Error?) {
+        let alert = NSAlert()
+        alert.messageText = "Error opening wiki file"
+        alert.informativeText = error?.localizedDescription ?? "Unknown error"
+        alert.alertStyle = NSAlert.Style.warning
+        
+        alert.runModal()
     }
 }
