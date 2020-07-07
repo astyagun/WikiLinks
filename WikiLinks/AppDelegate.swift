@@ -12,7 +12,7 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
-            let decodedUrl = url.absoluteString.removingPercentEncoding!
+            let decodedUrl = url.absoluteString.removingPercentEncoding!.replacingOccurrences(of: "%20", with: " ")
             let filePath = removeSchemeFromUrl(decodedUrl)
             let absoluteUrl = absoluteWikiUrlFromRelativePath(filePath)
             
